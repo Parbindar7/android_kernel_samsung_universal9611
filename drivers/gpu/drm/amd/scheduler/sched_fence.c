@@ -109,6 +109,11 @@ static bool amd_sched_fence_enable_signaling(struct dma_fence *f)
 	return true;
 }
 
+static bool drm_sched_fence_enable_signaling(struct dma_fence *f)
+{
+	return true;
+}
+
 /**
  * amd_sched_fence_free - free up the fence memory
  *
