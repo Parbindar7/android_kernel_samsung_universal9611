@@ -193,6 +193,7 @@ static const struct dma_fence_ops timeline_fence_ops = {
 	.enable_signaling = timeline_fence_enable_signaling,
 	.disable_signaling = timeline_fence_disable_signaling,
 	.signaled = timeline_fence_signaled,
+	.wait = dma_fence_default_wait,
 	.release = timeline_fence_release,
 	.fence_value_str = timeline_fence_value_str,
 	.timeline_value_str = timeline_fence_timeline_value_str,
