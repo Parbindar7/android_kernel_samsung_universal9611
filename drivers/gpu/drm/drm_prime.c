@@ -361,31 +361,29 @@ static void drm_gem_dmabuf_vunmap(struct dma_buf *dma_buf, void *vaddr)
 	dev->driver->gem_prime_vunmap(obj, vaddr);
 }
 
-static void *drm_gem_dmabuf_kmap_atomic(struct dma_buf *dma_buf,
-					unsigned long page_num)
-{
-	return NULL;
-}
-
-static void drm_gem_dmabuf_kunmap_atomic(struct dma_buf *dma_buf,
-					 unsigned long page_num, void *addr)
-{
-
-}
 static void *drm_gem_dmabuf_kmap(struct dma_buf *dma_buf,
-				 unsigned long page_num)
+                                 unsigned long page_num)
 {
-	return NULL;
+        return NULL;
 }
 
 static void drm_gem_dmabuf_kunmap(struct dma_buf *dma_buf,
-				  unsigned long page_num, void *addr)
+                                  unsigned long page_num, void *addr)
 {
 
 }
 
-static int drm_gem_dmabuf_mmap(struct dma_buf *dma_buf,
-			       struct vm_area_struct *vma)
+/**
+ * drm_gem_dmabuf_mmap - dma_buf mmap implementation for GEM
+ * @dma_buf: buffer to be mapped
+ * @vma: virtual address range
+ *
+ * Provides memory mapping for the buffer. This can be used as the
+ * &dma_buf_ops.mmap callback.
+ *
+ * Returns 0 on success or a negative error code on failure.
+ */
+int drm_gem_dmabuf_mmap(struct dma_buf *dma_buf, struct vm_area_struct *vma)
 {
 	struct drm_gem_object *obj = dma_buf->priv;
 	struct drm_device *dev = obj->dev;
@@ -403,9 +401,7 @@ static const struct dma_buf_ops drm_gem_prime_dmabuf_ops =  {
 	.unmap_dma_buf = drm_gem_unmap_dma_buf,
 	.release = drm_gem_dmabuf_release,
 	.map = drm_gem_dmabuf_kmap,
-	.map_atomic = drm_gem_dmabuf_kmap_atomic,
 	.unmap = drm_gem_dmabuf_kunmap,
-	.unmap_atomic = drm_gem_dmabuf_kunmap_atomic,
 	.mmap = drm_gem_dmabuf_mmap,
 	.vmap = drm_gem_dmabuf_vmap,
 	.vunmap = drm_gem_dmabuf_vunmap,

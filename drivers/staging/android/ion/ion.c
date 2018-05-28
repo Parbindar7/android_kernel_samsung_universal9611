@@ -461,8 +461,6 @@ const struct dma_buf_ops ion_dma_buf_ops = {
 #endif
 	.mmap = ion_mmap,
 	.release = ion_dma_buf_release,
-	.map_atomic = ion_dma_buf_kmap,
-	.unmap_atomic = ion_dma_buf_kunmap,
 	.map = ion_dma_buf_kmap,
 	.unmap = ion_dma_buf_kunmap,
 	.vmap = ion_dma_buf_vmap,
