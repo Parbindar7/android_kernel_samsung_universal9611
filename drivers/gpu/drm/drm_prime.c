@@ -181,7 +181,6 @@ static int drm_prime_lookup_buf_handle(struct drm_prime_file_private *prime_fpri
 }
 
 static int drm_gem_map_attach(struct dma_buf *dma_buf,
-			      struct device *target_dev,
 			      struct dma_buf_attachment *attach)
 {
 	struct drm_prime_attachment *prime_attach;
