@@ -1586,7 +1586,7 @@ static int amdgpu_vm_bo_update_mapping(struct amdgpu_device *adev,
 	if (r)
 		goto error_free;
 
-	r = reservation_object_reserve_shared(vm->root.bo->tbo.resv);
+	r = reservation_object_reserve_shared(vm->root.bo->tbo.resv, 1);
 	if (r)
 		goto error_free;
 
