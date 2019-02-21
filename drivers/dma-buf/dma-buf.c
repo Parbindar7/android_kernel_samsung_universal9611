@@ -89,6 +89,7 @@ static struct file_system_type dma_buf_fs_type = {
 static void dma_buf_release(struct dentry *dentry)
 {
 	struct dma_buf *dmabuf;
+	int dtor_ret = 0;
 
 	dmabuf = dentry->d_fsdata;
 
@@ -104,9 +105,16 @@ static void dma_buf_release(struct dentry *dentry)
 	 */
 	BUG_ON(dmabuf->cb_shared.active || dmabuf->cb_excl.active);
 
-	dmabuf->ops->release(dmabuf);
-
 	dmabuf_trace_free(dmabuf);
+
+	if (dmabuf->dtor)
+		dtor_ret = dmabuf->dtor(dmabuf, dmabuf->dtor_data);
+
+	if (!dtor_ret)
+		dmabuf->ops->release(dmabuf);
+	else
+		pr_warn_ratelimited("Leaking dmabuf %s because destructor failed error:%d\n",
+				    dmabuf->name, dtor_ret);
 
 	if (dmabuf->resv == (struct reservation_object *)&dmabuf[1])
 		reservation_object_fini(dmabuf->resv);
