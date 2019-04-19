@@ -70,7 +70,6 @@ void sync_timeline_debug_add(struct sync_timeline *obj);
 void sync_timeline_debug_remove(struct sync_timeline *obj);
 void sync_file_debug_add(struct sync_file *fence);
 void sync_file_debug_remove(struct sync_file *fence);
-void sync_dump(void);
 
 #else
 # define sync_timeline_debug_add(obj)
