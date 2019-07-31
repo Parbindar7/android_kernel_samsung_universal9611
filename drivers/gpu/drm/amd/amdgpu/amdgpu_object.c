@@ -435,7 +435,7 @@ int amdgpu_bo_create_restricted(struct amdgpu_device *adev,
 
 fail_unreserve:
 	if (!resv)
-		ww_mutex_unlock(&bo->tbo.resv->lock);
+		reservation_object_unlock(bo->tbo.resv);
 	amdgpu_bo_unref(&bo);
 	return r;
 }
@@ -867,7 +867,7 @@ int amdgpu_bo_set_tiling_flags(struct amdgpu_bo *bo, u64 tiling_flags)
 
 void amdgpu_bo_get_tiling_flags(struct amdgpu_bo *bo, u64 *tiling_flags)
 {
-	lockdep_assert_held(&bo->tbo.resv->lock.base);
+	reservation_object_assert_held(bo->tbo.resv);
 
 	if (tiling_flags)
 		*tiling_flags = bo->tiling_flags;
@@ -1035,7 +1035,7 @@ u64 amdgpu_bo_gpu_offset(struct amdgpu_bo *bo)
 	WARN_ON_ONCE(bo->tbo.mem.mem_type == TTM_PL_SYSTEM);
 	WARN_ON_ONCE(bo->tbo.mem.mem_type == TTM_PL_TT &&
 		     !amdgpu_ttm_is_bound(bo->tbo.ttm));
-	WARN_ON_ONCE(!ww_mutex_is_locked(&bo->tbo.resv->lock) &&
+	WARN_ON_ONCE(!reservation_object_is_locked(bo->tbo.resv) &&
 		     !bo->pin_count);
 	WARN_ON_ONCE(bo->tbo.mem.start == AMDGPU_BO_INVALID_OFFSET);
 	WARN_ON_ONCE(bo->tbo.mem.mem_type == TTM_PL_VRAM &&
