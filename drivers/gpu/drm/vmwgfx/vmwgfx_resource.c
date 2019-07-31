@@ -927,14 +927,14 @@ void vmw_resource_unreserve(struct vmw_resource *res,
 
 	if (switch_backup && new_backup != res->backup) {
 		if (res->backup) {
-			lockdep_assert_held(&res->backup->base.resv->lock.base);
+			reservation_object_assert_held(res->backup->base.resv);
 			list_del_init(&res->mob_head);
 			vmw_dmabuf_unreference(&res->backup);
 		}
 
 		if (new_backup) {
 			res->backup = vmw_dmabuf_reference(new_backup);
-			lockdep_assert_held(&new_backup->base.resv->lock.base);
+			reservation_object_assert_held(new_backup->base.resv);
 			list_add_tail(&res->mob_head, &new_backup->res_list);
 		} else {
 			res->backup = NULL;
