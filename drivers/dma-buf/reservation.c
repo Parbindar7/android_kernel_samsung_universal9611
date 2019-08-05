@@ -468,6 +468,11 @@ unlock:
 		rcu_read_unlock();
 	} while (ret);
 
+	if (pfence_excl)
+		*pfence_excl = fence_excl;
+	else if (fence_excl)
+		shared[++shared_count] = fence_excl;
+
 	if (!shared_count) {
 		kfree(shared);
 		shared = NULL;
@@ -475,8 +480,6 @@ unlock:
 
 	*pshared_count = shared_count;
 	*pshared = shared;
-	*pfence_excl = fence_excl;
-
 	return ret;
 }
 EXPORT_SYMBOL_GPL(reservation_object_get_fences_rcu);
