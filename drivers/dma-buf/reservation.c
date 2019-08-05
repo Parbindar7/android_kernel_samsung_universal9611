@@ -459,13 +459,6 @@ int reservation_object_get_fences_rcu(struct reservation_object *obj,
 				if (!dma_fence_get_rcu(shared[i]))
 					break;
 			}
-
-			if (!pfence_excl && fence_excl) {
-				shared[i] = fence_excl;
-				fence_excl = NULL;
-				++i;
-				++shared_count;
-			}
 		}
 
 		if (i != shared_count || read_seqcount_retry(&obj->seq, seq)) {
