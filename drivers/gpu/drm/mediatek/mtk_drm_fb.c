@@ -16,7 +16,7 @@
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_gem.h>
 #include <linux/dma-buf.h>
-#include <linux/reservation.h>
+#include <linux/dma-resv.h>
 
 #include "mtk_drm_drv.h"
 #include "mtk_drm_fb.h"
