@@ -37,7 +37,7 @@
 #include "intel_mocs.h"
 #include <linux/dma-fence-array.h>
 #include <linux/kthread.h>
-#include <linux/reservation.h>
+#include <linux/dma-resv.h>
 #include <linux/shmem_fs.h>
 #include <linux/slab.h>
 #include <linux/stop_machine.h>

@@ -43,7 +43,7 @@
 #include <linux/intel-iommu.h>
 #include <linux/kref.h>
 #include <linux/pm_qos.h>
-#include <linux/reservation.h>
+#include <linux/dma-resv.h>
 #include <linux/shmem_fs.h>
 
 #include <drm/drmP.h>
