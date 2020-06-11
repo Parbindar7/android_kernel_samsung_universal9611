@@ -75,7 +75,20 @@ static void dma_buf_release(struct dentry *dentry)
 	struct dma_buf *dmabuf;
 	int dtor_ret = 0;
 
+<<<<<<< HEAD
 	dmabuf = dentry->d_fsdata;
+||||||| parent of ef29bf8031d8 (UPSTREAM: dma-buf: Move dma_buf_release() from fops to dentry_ops)
+	if (!is_dma_buf_file(file))
+		return -EINVAL;
+
+	dmabuf = file->private_data;
+
+	dmabuf_trace_free(dmabuf);
+=======
+	dmabuf = dentry->d_fsdata;
+
+	dmabuf_trace_free(dmabuf);
+>>>>>>> ef29bf8031d8 (UPSTREAM: dma-buf: Move dma_buf_release() from fops to dentry_ops)
 
 	BUG_ON(dmabuf->vmapping_counter);
 
@@ -107,6 +120,7 @@ static void dma_buf_release(struct dentry *dentry)
 	kfree(dmabuf->exp_name);
 	kfree(dmabuf->name);
 	kfree(dmabuf);
+<<<<<<< HEAD
 }
 
 static int dma_buf_file_release(struct inode *inode, struct file *file)
@@ -122,9 +136,30 @@ static int dma_buf_file_release(struct inode *inode, struct file *file)
 	list_del(&dmabuf->list_node);
 	mutex_unlock(&db_list.lock);
 
+||||||| parent of ef29bf8031d8 (UPSTREAM: dma-buf: Move dma_buf_release() from fops to dentry_ops)
+=======
+}
+
+static const struct dentry_operations dma_buf_dentry_ops = {
+	.d_dname = dmabuffs_dname,
+	.d_release = dma_buf_release,
+};
+
+static struct vfsmount *dma_buf_mnt;
+
+static int dma_buf_fs_init_context(struct fs_context *fc)
+{
+	struct pseudo_fs_context *ctx;
+
+	ctx = init_pseudo(fc, DMA_BUF_MAGIC);
+	if (!ctx)
+		return -ENOMEM;
+	ctx->dops = &dma_buf_dentry_ops;
+>>>>>>> ef29bf8031d8 (UPSTREAM: dma-buf: Move dma_buf_release() from fops to dentry_ops)
 	return 0;
 }
 
+<<<<<<< HEAD
 static const struct dentry_operations dma_buf_dentry_ops = {
 	.d_dname = dmabuffs_dname,
 	.d_release = dma_buf_release,
@@ -145,6 +180,15 @@ static struct file_system_type dma_buf_fs_type = {
 	.kill_sb = kill_anon_super,
 };
 
+||||||| parent of ef29bf8031d8 (UPSTREAM: dma-buf: Move dma_buf_release() from fops to dentry_ops)
+=======
+static struct file_system_type dma_buf_fs_type = {
+	.name = "dmabuf",
+	.init_fs_context = dma_buf_fs_init_context,
+	.kill_sb = kill_anon_super,
+};
+
+>>>>>>> ef29bf8031d8 (UPSTREAM: dma-buf: Move dma_buf_release() from fops to dentry_ops)
 static int dma_buf_mmap_internal(struct file *file, struct vm_area_struct *vma)
 {
 	struct dma_buf *dmabuf;
@@ -474,7 +518,12 @@ static void dma_buf_show_fdinfo(struct seq_file *m, struct file *file)
 }
 
 static const struct file_operations dma_buf_fops = {
+<<<<<<< HEAD
 	.release	= dma_buf_file_release,
+||||||| parent of ef29bf8031d8 (UPSTREAM: dma-buf: Move dma_buf_release() from fops to dentry_ops)
+	.release	= dma_buf_release,
+=======
+>>>>>>> ef29bf8031d8 (UPSTREAM: dma-buf: Move dma_buf_release() from fops to dentry_ops)
 	.mmap		= dma_buf_mmap_internal,
 	.llseek		= dma_buf_llseek,
 	.poll		= dma_buf_poll,
