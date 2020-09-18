@@ -86,6 +86,8 @@ static void dma_buf_release(struct dentry *dentry)
 	dmabuf_trace_free(dmabuf);
 =======
 	dmabuf = dentry->d_fsdata;
+	if (unlikely(!dmabuf))
+		return;
 
 	dmabuf_trace_free(dmabuf);
 >>>>>>> ef29bf8031d8 (UPSTREAM: dma-buf: Move dma_buf_release() from fops to dentry_ops)
