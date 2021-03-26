@@ -2586,8 +2586,13 @@
 					dev = "/dev/block/platform/13520000.ufs/by-name/system";
 					type = "ext4";
 					mnt_flags = "ro";
+<<<<<<< HEAD
 					fsmgr_flags = "wait,avb";
 					status = "disabled";
+=======
+					fsmgr_flags = "wait";
+					status = "okay";
+>>>>>>> 529aa092f123 (arm64: dts: exynos: Load the ramdisk in kernel)
 				};
 
 				vendor {
