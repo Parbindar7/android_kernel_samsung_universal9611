@@ -430,6 +430,8 @@ int dma_buf_mmap(struct dma_buf *, struct vm_area_struct *,
 		 unsigned long);
 void *dma_buf_vmap(struct dma_buf *);
 void dma_buf_vunmap(struct dma_buf *, void *vaddr);
+struct dma_buf *dma_buf_iter_begin(void);
+struct dma_buf *dma_buf_iter_next(struct dma_buf *dmbuf);
 
 
 #ifdef CONFIG_DMA_BUF_CONTAINER
@@ -440,6 +442,5 @@ static inline struct dma_buf *dma_buf_get_any(int fd)
 	return dma_buf_get(fd);
 }
 #endif
-
 
 #endif /* __DMA_BUF_H__ */
