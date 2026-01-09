@@ -3026,6 +3026,11 @@
 			reg = <0x0 0x139B0a14 0x4>;
 		};
 
+		system_dma_heap {
+			compatible = "samsung,dma-heap-system";
+			dma-heap,name = "system";
+		};
+
 		cam-stat {
 			/* ISPPRE_STATUS(0x1406404C), ISPHQ_STATUS(0x14064054), ISPLP_STATUS(0x1406405C) */
 			reg = <0x0 0x11864024 0x4>;
