@@ -1168,7 +1168,7 @@ CONFIG_MAC80211_STA_HASH_MAX_SIZE=0
 # CONFIG_CAIF is not set
 # CONFIG_CEPH_LIB is not set
 # CONFIG_NFC is not set
-CONFIG_SAMSUNG_NFC=y
+# CONFIG_SAMSUNG_NFC is not set
 
 #
 # Near Field Communication (NFC) devices
@@ -1188,7 +1188,7 @@ CONFIG_NFC_PN547_ESE_SUPPORT=y
 # CONFIG_NFC_PN547_LDO_CONTROL is not set
 # CONFIG_NFC_PN533_USB is not set
 # CONFIG_NFC_PN533_I2C is not set
-CONFIG_SEC_NFC_LOGGER=y
+# CONFIG_SEC_NFC_LOGGER i not set
 # CONFIG_PSAMPLE is not set
 # CONFIG_NET_IFE is not set
 # CONFIG_LWTUNNEL is not set
