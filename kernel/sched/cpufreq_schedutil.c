@@ -415,6 +415,7 @@ static void sugov_iowait_boost(struct sugov_cpu *sg_cpu, unsigned long *util,
         sg_cpu->iowait_boost_pending = false;
 
         boost = (sg_cpu->iowait_boost * *max) >> SCHED_CAPACITY_SHIFT;
+        boost = uclamp_util_with(cpu_rq(sg_cpu->cpu), boost, NULL);
         if (*util < boost)
                 *util = boost;
 }
