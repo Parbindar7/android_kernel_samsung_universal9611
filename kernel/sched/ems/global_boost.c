@@ -125,7 +125,7 @@ int global_boosted(void)
 
 int global_boosting(struct task_struct *p)
 {
-	if (!global_boosted())
+	if (!global_boosted() && !uclamp_boosted(p))
 		return -1;
 
 	return select_perf_cpu(p);
