@@ -319,7 +319,6 @@ static unsigned int tz_uiwsock_poll(struct file *filp, poll_table *wait)
 				if (!circ_buf_is_full(&sd->oob_buf))
 					mask |= POLLOUT | POLLWRBAND;
 			}
-
 			break;
 		}
 		break;
