@@ -216,7 +216,7 @@ static void dma_buf_poll_cb(struct dma_fence *fence, struct dma_fence_cb *cb)
 	unsigned long flags;
 
 	spin_lock_irqsave(&dcb->poll->lock, flags);
-	wake_up_locked_poll(dcb->poll, dcb->active);
+	wake_up_locked_poll(dcb->poll, (unsigned long)dcb->active);
 	dcb->active = 0;
 	spin_unlock_irqrestore(&dcb->poll->lock, flags);
 }
