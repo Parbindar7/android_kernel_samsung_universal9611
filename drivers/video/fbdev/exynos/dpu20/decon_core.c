@@ -3401,6 +3401,7 @@ static int decon_fb_alloc_memory(struct decon_device *decon, struct decon_win *w
 #endif
 	struct dsim_device *dsim;
 	struct device *dev = NULL;
+	struct dma_heap *dma_heap;
 	unsigned int real_size, virt_size, size;
 	dma_addr_t map_dma;
 #if defined(CONFIG_SUPPORT_LEGACY_ION)
@@ -3427,25 +3428,17 @@ static int decon_fb_alloc_memory(struct decon_device *decon, struct decon_win *w
 	size = PAGE_ALIGN(size);
 
 	dev_info(decon->dev, "want %u bytes for window[%d]\n", size, win->idx);
-#if defined(CONFIG_SUPPORT_LEGACY_ION)
-	handle = ion_alloc(decon->ion_client, (size_t)size, 0,
-					EXYNOS_ION_HEAP_SYSTEM_MASK, 0);
-	if (IS_ERR(handle)) {
-		dev_err(decon->dev, "failed to ion_alloc\n");
-		return -ENOMEM;
-	}
 
-	buf = ion_share_dma_buf(decon->ion_client, handle);
-	if (IS_ERR_OR_NULL(buf)) {
-		dev_err(decon->dev, "ion_share_dma_buf() failed\n");
-		goto err_share_dma_buf;
-	}
-
-	vaddr = ion_map_kernel(decon->ion_client, handle);
-#else
-	buf = ion_alloc_dmabuf("ion_system_heap", (size_t)size, 0);
+        dma_heap = dma_heap_find("system-uncached");
+        if (dma_heap) {
+                buf = dma_heap_buffer_alloc(dma_heap, (size_t)size, 0, 0);
+                dma_heap_put(dma_heap);
+        } else {
+                pr_err("dma_heap_find() failed\n");
+                goto err_share_dma_buf;
+        }
 	if (IS_ERR(buf)) {
-		dev_err(decon->dev, "ion_share_dma_buf() failed\n");
+		dev_err(dsim->dev, "ion_alloc() failed\n");
 		goto err_share_dma_buf;
 	}
 
@@ -3520,6 +3513,7 @@ static int decon_fb_test_alloc_memory(struct decon_device *decon, u32 size)
 	dma_addr_t map_dma;
 	struct ion_handle *handle;
 	struct dma_buf *buf;
+	struct dma_heap *dma_heap;
 	void *vaddr;
 	unsigned int ret;
 
@@ -3529,8 +3523,6 @@ static int decon_fb_test_alloc_memory(struct decon_device *decon, u32 size)
 	size = PAGE_ALIGN(size);
 	fbi->fix.smem_len = size;
 
-	dev_info(decon->dev, "want %u bytes for window[%d]\n", size, win->idx);
-
 	handle = ion_alloc(decon->ion_client, (size_t)size, 0,
 					EXYNOS_ION_HEAP_SYSTEM_MASK, 0);
 	if (IS_ERR(handle)) {
@@ -3538,9 +3530,16 @@ static int decon_fb_test_alloc_memory(struct decon_device *decon, u32 size)
 		return -ENOMEM;
 	}
 
-	buf = ion_share_dma_buf(decon->ion_client, handle);
+        dma_heap = dma_heap_find("system-uncached");
+        if (dma_heap) {
+                buf = dma_heap_buffer_alloc(dma_heap, (size_t)size, 0, 0);
+                dma_heap_put(dma_heap);
+        } else {
+                pr_err("dma_heap_find() failed\n");
+                goto err_share_dma_buf;
+        }
 	if (IS_ERR_OR_NULL(buf)) {
-		dev_err(decon->dev, "ion_share_dma_buf() failed\n");
+		dev_err(dsim->dev, "ion_alloc() failed\n");
 		goto err_share_dma_buf;
 	}
 
