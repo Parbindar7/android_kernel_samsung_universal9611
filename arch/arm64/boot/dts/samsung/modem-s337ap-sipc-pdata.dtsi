@@ -363,7 +363,7 @@
 					};
 					io_device_20 {
 						iod,name = "smd4";
-						iod,id = <34>;
+						iod,id = <33>;
 						iod,format = <1>;
 						iod,io_type = <0>;
 						iod,links = <0x200>;
@@ -372,7 +372,7 @@
 						iod,ul_buffer_size = <2048>;
 						iod,dl_num_buffers = <128>;
 						iod,dl_buffer_size = <2048>;
-						iod,option_region = "usa_";
+						iod,option_region = "kor_single";
 					};
 					io_device_21 {
 						iod,name = "umts_ciq0";

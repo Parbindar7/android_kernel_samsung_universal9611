@@ -9,7 +9,7 @@
  * published by the Free Software Foundation.
  */
 
-#include <generated/autoconf.h>
+#include "../../../../../include/generated/autoconf.h"
 #include <dt-bindings/soc/samsung/debug-snapshot-table.h>
 #include <dt-bindings/soc/samsung/exynos9610-seclog.h>
 
@@ -51,7 +51,7 @@
 		};
 	};
 
-	reserved_memory: reserved-memory {
+	reserved-memory {
 		#address-cells = <2>;
 		#size-cells = <1>;
 		ranges;
@@ -91,16 +91,16 @@
 			compatible = "exynos,sec_debug_magic";
 			reg = <0x0 0x80000000 0x1000>;
 		};
-
+		
 		modem_if {
-			compatible = "exynos,modem_if";
+ 			compatible = "exynos,modem_if";
 			reg = <0x0 0xED000000 0x8A00000>;
 		};
 
 		cp_ram_logging {
 			compatible = "exynos,cp_ram_logging";
 			reg = <0x0 0xF5A00000 0x1E00000>;
-		};
+ 		};
 
 		chub_rmem: chub_rmem {
 			compatible = "exynos,chub_rmem";
@@ -156,6 +156,11 @@
 		wifibt_if {
 			compatible = "exynos,wifibt_if";
 			size = <0x1000000>; /* 16MB */
+		};
+
+		vipx_fw_code_rmem: vipx_fw_rmem@0xB8000000 {
+		      compatible = "exynos,vipx_fw_code_rmem";
+		      reg = <0x0 0xb8000000 0x500000>;
 		};
 	};
 };
