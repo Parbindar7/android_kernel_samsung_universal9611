@@ -7779,7 +7779,7 @@ void slsi_collect_chipset_logs(struct work_struct *work)
 	char build_id_fw[128];
 	char build_id_drv[64];
 	size_t total_header;
-
+    int ret = 0;
 	total_header = sizeof(build_id_fw) + sizeof(build_id_drv);
 
 	if (!sdev || !sdev->service) {
