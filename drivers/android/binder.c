@@ -6107,7 +6107,17 @@ static void print_binder_proc(struct seq_file *m,
 	struct binder_node *last_node = NULL;
 
 	seq_printf(m, "proc %d\n", proc->pid);
-	seq_printf(m, "context %s\n", proc->context->name);
+	/*
+	 * FIX: proc->context NULL kontrolu eklendi (M30S portu).
+	 * dumpstate, binder debug node'unu okurken proc->context henuz
+	 * set edilmemis bir binder_proc'a rastlarsa (init/teardown
+	 * sirasindaki race condition), asagidaki dogrudan erisim NULL
+	 * pointer dereference'a ve kernel panic'e yol aciyordu.
+	 */
+	if (proc->context)
+		seq_printf(m, "context %s\n", proc->context->name);
+	else
+		seq_printf(m, "context (null)\n");
 	header_pos = m->count;
 
 	binder_inner_proc_lock(proc);
@@ -6274,7 +6284,11 @@ static void print_binder_proc_stats(struct seq_file *m,
 		binder_alloc_get_free_async_space(&proc->alloc);
 
 	seq_printf(m, "proc %d\n", proc->pid);
-	seq_printf(m, "context %s\n", proc->context->name);
+	/* FIX: proc->context NULL kontrolu (print_binder_proc ile ayni sebep) */
+	if (proc->context)
+		seq_printf(m, "context %s\n", proc->context->name);
+	else
+		seq_printf(m, "context (null)\n");
 	count = 0;
 	ready_threads = 0;
 	binder_inner_proc_lock(proc);
