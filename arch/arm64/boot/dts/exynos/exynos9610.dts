@@ -2569,49 +2569,8 @@
 	};
 
 	firmware {
-
 		android {
 			compatible = "android,firmware";
-
-			vbmeta {
-				compatible = "android,vbmeta";
-				parts = "vbmeta,boot,recovery,system,vendor,product,dtb,dtbo,keystorage";
-			};
-
-			fstab {
-				compatible = "android,fstab";
-
-				system {
-					compatible = "android,system";
-					dev = "/dev/block/platform/13520000.ufs/by-name/system";
-					type = "ext4";
-					mnt_flags = "ro";
-<<<<<<< HEAD
-					fsmgr_flags = "wait,avb";
-					status = "disabled";
-=======
-					fsmgr_flags = "wait";
-					status = "okay";
->>>>>>> 529aa092f123 (arm64: dts: exynos: Load the ramdisk in kernel)
-				};
-
-				vendor {
-					compatible = "android,vendor";
-					dev = "/dev/block/platform/13520000.ufs/by-name/vendor";
-					type = "ext4";
-					mnt_flags = "ro";
-					fsmgr_flags = "wait,verify,avb";
-					status = "okay";
-				};
-
-				product {
-					compatible = "android,product";
-					dev = "/dev/block/platform/13520000.ufs/by-name/product";
-					type = "ext4";
-					mnt_flags = "ro";
-					fsmgr_flags = "wait,verify,avb";
-				};
-			};
 		};
 	};
 
