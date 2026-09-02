@@ -415,6 +415,68 @@
 		};
 	};
 
+	fimc_is_sensor4: fimc_is_sensor4@14430000 {
+		/* REAR3/CSIS3 */
+		compatible = "samsung,exynos5-fimc-is-sensor";
+		#pb-id-cells = <4>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		#interrupt-cells = <1>;
+		reg = <0x0 0x14430000 0x0700>, /* MIPI-CSI3 */
+			<0x0 0x14430700 0x100>; /* PHY: TOP_M2S4S4S2 */
+		reg-names = "csi", "phy";
+		interrupts = <0 328 0>, /* MIPI-CSI3 */
+			<0 334 0>, /* VC0 DMA3 */
+			<0 334 0>, /* VC1 DMA3 */
+			<0 334 0>, /* VC2 DMA3 */
+			<0 334 0>; /* VC3 DMA3 */
+		interrupt-names = "csi",
+			"mode0_VC0", "mode0_VC1","mode0_VC2","mode0_VC3";
+		phys = <&mipi_phy_csis_m2s4s4s2 2>;
+		phy-names = "csis_dphy";
+		clocks = <&clock CIS_CLK0>,
+			<&clock CIS_CLK1>,
+			<&clock CIS_CLK2>,
+			<&clock CIS_CLK3>,
+
+			<&clock GATE_DFTMUX_TOP_QCH_CLK_CSIS0>,
+			<&clock GATE_DFTMUX_TOP_QCH_CLK_CSIS1>,
+			<&clock GATE_DFTMUX_TOP_QCH_CLK_CSIS2>,
+			<&clock GATE_DFTMUX_TOP_QCH_CLK_CSIS3>,
+
+			<&clock GATE_IS6P10P0_CAM_QCH_S_CAM_CSIS0>,
+			<&clock GATE_IS6P10P0_CAM_QCH_S_CAM_CSIS1>,
+			<&clock GATE_IS6P10P0_CAM_QCH_S_CAM_CSIS2>,
+			<&clock GATE_IS6P10P0_CAM_QCH_S_CAM_CSIS3>;
+		clock-names = "CIS_CLK0",
+			"CIS_CLK1",
+			"CIS_CLK2",
+			"CIS_CLK3",
+
+			"GATE_DFTMUX_TOP_QCH_CLK_CSIS0",
+			"GATE_DFTMUX_TOP_QCH_CLK_CSIS1",
+			"GATE_DFTMUX_TOP_QCH_CLK_CSIS2",
+			"GATE_DFTMUX_TOP_QCH_CLK_CSIS3",
+
+			"GATE_IS6P10P0_CAM_QCH_S_CAM_CSIS0",
+			"GATE_IS6P10P0_CAM_QCH_S_CAM_CSIS1",
+			"GATE_IS6P10P0_CAM_QCH_S_CAM_CSIS2",
+			"GATE_IS6P10P0_CAM_QCH_S_CAM_CSIS3";
+		iommus = <&sysmmu_cam>;
+
+		/* without PAF HW */
+		sensor4_ch_mode0: sensor4-ch-mode0 {
+			reg = <0x14480000 0x100>, /* VC0 DMA3 */
+				<0x14480400 0x100>, /* VC0 DMA3 COMMON */
+				<0x14480100 0x100>, /* VC1 DMA3 */
+				<0x14480400 0x100>, /* VC1 DMA3 COMMON */
+				<0x14480200 0x100>, /* VC2 DMA3 */
+				<0x14480400 0x100>, /* VC2 DMA3 COMMON */
+				<0x14480300 0x100>, /* VC3 DMA3 */
+				<0x14480400 0x100>; /* VC3 DMA3 COMMON */
+		};
+	};
+
 	sensor_paf_pafstat_0: sensor-paf-pafstat@14440000 {
 		/* PAFSTAT CORE0 */
 		compatible = "samsung,sensor-paf-pafstat";
