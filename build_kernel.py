@@ -152,7 +152,7 @@ def main():
         'anykernel.sh',
         'version'
     ])
-    final_zip_path = f'{parent_dir}/{zip_filename}'
+    final_zip_path = f'{parent_dir}/out/{zip_filename}'
     try:
         os.remove(f'{anykernel3_dir}/Image')
         os.remove(f'{anykernel3_dir}/dtbo.img')
