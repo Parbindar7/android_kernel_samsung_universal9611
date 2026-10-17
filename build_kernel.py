@@ -163,7 +163,7 @@ def main():
     shutil.move(zip_filename, final_zip_path)
     os.chdir('..')
     display_info({
-        'Zip name': zip_filename,
+        'Zip path': final_zip_path,
         'Kernel version': kernel_version_info,
         'Elapsed time': f"{elapsed_time.total_seconds()} seconds"
     })
