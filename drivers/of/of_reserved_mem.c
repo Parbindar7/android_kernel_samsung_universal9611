@@ -427,7 +427,7 @@ struct reserved_mem *of_reserved_mem_lookup(struct device_node *np)
 	const char *name;
 	int i;
 
-	if (!np->full_name)
+	if (!np || !np->full_name)
 		return NULL;
 
 	name = kbasename(np->full_name);
