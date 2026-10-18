@@ -14,43 +14,6 @@
 #include <dt-bindings/soc/samsung/exynos9610-seclog.h>
 
 / {
-	ion-hpa-heap {
-		#address-cells = <2>;
-		#size-cells = <1>;
-		ranges;
-		ion,hpa_limit = <0x9 0x00000000>;
-		ion_video_fw {
-			compatible = "exynos9820-ion";
-			ion,heapname = "vfw_heap";
-			ion,secure;
-			ion,protection_id = <2>;
-			ion,alignment = <0x10000>;
-		};
-
-		ion_video_nfw {
-			compatible = "exynos9820-ion";
-			ion,heapname = "vnfw_heap";
-			ion,protection_id = <7>;
-			ion,alignment = <0x10000>;
-		};
-
-		ion_video_frame {
-			compatible = "exynos9820-ion";
-			ion,heapname = "vframe_heap";
-			ion,secure;
-			ion,protection_id = <5>;
-			ion,alignment = <0x10000>;
-		};
-
-		ion_video_scaler {
-			compatible = "exynos9820-ion";
-			ion,heapname = "vscaler_heap";
-			ion,secure;
-			ion,protection_id = <6>;
-			ion,alignment = <0x10000>;
-		};
-	};
-
 	reserved_memory: reserved-memory {
 		#address-cells = <2>;
 		#size-cells = <1>;
@@ -85,6 +48,28 @@
 			reusable;
 			ion,heapname = "crypto_heap";
 			ion,alignment = <0x10000>;
+		};
+
+		vframe_reserved: vframe {
+			compatible = "shared-dma-pool";
+			size = <0x5800000>;
+			alignment = <0x0 0x10000>;
+			reusable;
+		};
+
+		vscaler_reserved: vscaler {
+			compatible = "shared-dma-pool";
+			size = <0x2c00000>;
+			alignment = <0x0 0x10000>;
+			reusable;
+		};
+
+		secure_camera: secure_camera@0xE1900000 {
+			reg = <0x0 0xE1900000 0x2000000>;
+		};
+
+		camera_contig: camera_contig@0xDB900000 {
+			reg = <0x0 0xDB900000 0x700000>;
 		};
 
 		sec_debug_magic {

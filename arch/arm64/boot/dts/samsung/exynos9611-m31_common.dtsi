@@ -1261,19 +1261,10 @@
 };
 
 &reserved_memory {
-	secure_camera {
-		compatible = "exynos9820-ion";
-		ion,heapname = "secure_camera";
+	secure_camera: secure_camera@0xE1900000 {
 		reg = <0x0 0xE1900000 0x2000000>;
-		ion,secure;
-		ion,protection_id = <11>;
-		ion,alignment = <0x10000>;
 	};
-	camera_contig {
-		compatible = "exynos9820-ion";
-		ion,heapname = "camera_heap";
+	camera_contig: camera_contig@0xDB900000 {
 		reg = <0x0 0xDB900000 0x700000>;
-		ion,secure;
-		ion,protection_id = <10>;
 	};
 };
