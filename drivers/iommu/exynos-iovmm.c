@@ -823,3 +823,99 @@ void iovmm_set_fault_handler(struct device *dev,
 	if (ret)
 		dev_err(dev, "Failed to add fault handler\n");
 }
+
+#ifndef CONFIG_ION_EXYNOS
+#include <linux/dma-buf.h>
+#include <linux/dma-heap.h>
+#include <linux/property.h>
+#include <linux/ion_exynos.h>
+
+struct dma_buf *ion_alloc_dmabuf(const char *heap_name,
+				 size_t len, unsigned int flags)
+{
+	struct dma_heap *heap;
+	struct dma_buf *dmabuf;
+	const char *target = heap_name;
+
+	if (!target || !strcmp(target, "ion_system_heap"))
+		target = "system";
+
+	heap = dma_heap_find(target);
+	if (!heap) {
+		/* Fallback if uncached or specific heap name requested */
+		if (!strcmp(target, "system"))
+			heap = dma_heap_find("system-uncached");
+		if (!heap) {
+			pr_err("%s: heap '%s' (resolved '%s') not found\n",
+			       __func__, heap_name ? heap_name : "NULL", target);
+			return ERR_PTR(-ENODEV);
+		}
+	}
+
+	dmabuf = dma_heap_buffer_alloc(heap, len, 0, flags);
+	dma_heap_put(heap);
+
+	return dmabuf;
+}
+EXPORT_SYMBOL_GPL(ion_alloc_dmabuf);
+
+bool ion_cached_dmabuf(struct dma_buf *dmabuf)
+{
+	return true;
+}
+EXPORT_SYMBOL_GPL(ion_cached_dmabuf);
+
+bool ion_hwrender_dmabuf(struct dma_buf *dmabuf)
+{
+	return false;
+}
+EXPORT_SYMBOL_GPL(ion_hwrender_dmabuf);
+
+dma_addr_t ion_iovmm_map(struct dma_buf_attachment *attachment,
+			 off_t offset, size_t size,
+			 enum dma_data_direction direction, int prop)
+{
+	struct sg_table *sgt;
+	dma_addr_t iova;
+
+	if (device_get_dma_attr(attachment->dev) == DEV_DMA_COHERENT)
+		prop |= IOMMU_CACHE;
+
+	sgt = dma_buf_map_attachment(attachment, direction);
+	if (IS_ERR_OR_NULL(sgt))
+		return sgt ? PTR_ERR(sgt) : -EINVAL;
+
+	if (size == 0)
+		size = attachment->dmabuf->size;
+
+	iova = iovmm_map(attachment->dev, sgt->sgl, offset, size, direction, prop);
+	if (IS_ERR_VALUE(iova))
+		dma_buf_unmap_attachment(attachment, sgt, direction);
+
+	return iova;
+}
+EXPORT_SYMBOL_GPL(ion_iovmm_map);
+
+dma_addr_t ion_iovmm_map_attr(struct dma_buf_attachment *attachment,
+			      off_t offset, size_t size,
+			      enum dma_data_direction direction, int prop,
+			      int map_attr)
+{
+	return ion_iovmm_map(attachment, offset, size, direction, prop);
+}
+EXPORT_SYMBOL_GPL(ion_iovmm_map_attr);
+
+void ion_iovmm_unmap(struct dma_buf_attachment *attachment, dma_addr_t iova)
+{
+	iovmm_unmap(attachment->dev, iova);
+}
+EXPORT_SYMBOL_GPL(ion_iovmm_unmap);
+
+void ion_iovmm_unmap_attr(struct dma_buf_attachment *attachment,
+			  dma_addr_t iova, int map_attr)
+{
+	iovmm_unmap(attachment->dev, iova);
+}
+EXPORT_SYMBOL_GPL(ion_iovmm_unmap_attr);
+#endif
+
