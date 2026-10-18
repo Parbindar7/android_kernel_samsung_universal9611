@@ -26,7 +26,7 @@ struct dma_buf_attachment;
 #define ION_FLAG_NOZEROED 8
 #define ION_FLAG_PROTECTED 16
 
-#ifdef CONFIG_ION_EXYNOS
+#if defined(CONFIG_ION_EXYNOS) || defined(CONFIG_EXYNOS_IOVMM)
 struct dma_buf *ion_alloc_dmabuf(const char *heap_name,
 				 size_t len, unsigned int flags);
 bool ion_cached_dmabuf(struct dma_buf *dmabuf);
@@ -49,7 +49,7 @@ static inline bool ion_hwrender_dmabuf(struct dma_buf *dmabuf)
 }
 #endif
 
-#if defined(CONFIG_EXYNOS_IOVMM) && defined(CONFIG_ION_EXYNOS)
+#if defined(CONFIG_EXYNOS_IOVMM)
 #define IOMMU_EXYNOS_SECURE	(1 << 0)
 
 dma_addr_t ion_iovmm_map(struct dma_buf_attachment *attachment,
