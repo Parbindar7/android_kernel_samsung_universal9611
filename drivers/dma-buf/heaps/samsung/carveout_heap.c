@@ -133,9 +133,15 @@ static int carveout_heap_probe(struct platform_device *pdev)
 	int ret;
 
 	rmem_np = of_parse_phandle(pdev->dev.of_node, "memory-region", 0);
+	if (!rmem_np) {
+		perrdev(&pdev->dev, "failed to parse memory-region phandle\n");
+		return -ENODEV;
+	}
+
 	rmem = of_reserved_mem_lookup(rmem_np);
+	of_node_put(rmem_np);
 	if (!rmem) {
-		perrdev(&pdev->dev, "memory-region handle not found");
+		perrdev(&pdev->dev, "memory-region handle not found\n");
 		return -ENODEV;
 	}
 
