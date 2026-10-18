@@ -17,6 +17,8 @@
 #define __LINUX_ION_EXYNOS_H__
 
 #include <linux/dma-direction.h>
+#include <linux/err.h>
+#include <linux/errno.h>
 
 struct dma_buf_attachment;
 
@@ -41,7 +43,7 @@ static inline bool ion_cached_dmabuf(struct dma_buf *dmabuf)
 	return false;
 }
 
-static inline bool ion_cached_hwrender(struct dma_buf *dmabuf)
+static inline bool ion_hwrender_dmabuf(struct dma_buf *dmabuf)
 {
 	return false;
 }
@@ -76,7 +78,7 @@ static inline dma_addr_t ion_iovmm_map_attr(struct dma_buf_attachment *attachmen
 {
 	return -ENODEV;
 }
-#define ion_iovmm_unmap(attachment, iova, map_attr) do { } while (0)
+#define ion_iovmm_unmap_attr(attachment, iova, map_attr) do { } while (0)
 
 #endif
 
