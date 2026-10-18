@@ -1775,7 +1775,7 @@
 			reg = <0x0 0x14A51300 0x100>;
 			id = <3>;
 			type = "sync";
-			buffer_type = "ion";
+			buffer_type = "dma";
 		};
 
 		abox_rdma_4: abox_rdma@0x14A51400 {
@@ -1825,7 +1825,7 @@
 			reg = <0x0 0x14A52100 0x100>;
 			id = <1>;
 			type = "normal";
-			buffer_type = "ion";
+			buffer_type = "dma";
 		};
 
 		abox_wdma_2: abox_wdma@0x14A52200 {
@@ -3718,4 +3718,25 @@
 		iommus = <&sysmmu_vipx1>, <&sysmmu_vipx2>;
 		status = "ok";
 	};
+
+	system_dma_heap {
+		compatible = "samsung,dma-heap-system";
+		dma-heap,name = "system";
+	};
+
+	crypto_dma_heap {
+		compatible = "samsung,dma-heap-cma";
+		memory-region = <&crypto_reserved>;
+		dma-heap,name = "crypto";
+	};
+
+	video_stream_dma_heap {
+		compatible = "samsung,dma-heap-cma";
+		memory-region = <&vstream_reserved>;
+		dma-heap,name = "system-secure-vstream";
+		dma-heap,secure;
+		dma-heap,protection_id = <3>;
+		dma-heap,alignment = <0x10000>;
+	};
 };
+
