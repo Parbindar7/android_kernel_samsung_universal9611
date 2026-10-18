@@ -3738,5 +3738,44 @@
 		dma-heap,protection_id = <3>;
 		dma-heap,alignment = <0x10000>;
 	};
+
+	video_frame_dma_heap {
+		compatible = "samsung,dma-heap-cma";
+		memory-region = <&vframe_reserved>;
+		dma-heap,name = "vframe";
+		dma-heap,secure;
+		dma-heap,protection_id = <5>;
+		dma-heap,alignment = <0x10000>;
+	};
+
+	video_scaler_dma_heap {
+		compatible = "samsung,dma-heap-cma";
+		memory-region = <&vscaler_reserved>;
+		dma-heap,name = "vscaler";
+		dma-heap,secure;
+		dma-heap,protection_id = <6>;
+		dma-heap,alignment = <0x10000>;
+	};
+
+	secure_camera_dma_heap {
+		compatible = "samsung,dma-heap-carveout";
+		memory-region = <&secure_camera>;
+		dma-heap,name = "secure_camera";
+		dma-heap,untouchable;
+		dma-heap,secure;
+		dma-heap,secure_sysmmu;
+		dma-heap,protection_id = <11>;
+		dma-heap,alignment = <0x10000>;
+	};
+
+	camera_contig_dma_heap {
+		compatible = "samsung,dma-heap-carveout";
+		memory-region = <&camera_contig>;
+		dma-heap,name = "camera_heap";
+		dma-heap,secure;
+		dma-heap,allow_kva;
+		dma-heap,protection_id = <10>;
+		dma-heap,alignment = <0x10000>;
+	};
 };
 
