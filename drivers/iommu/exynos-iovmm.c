@@ -892,40 +892,99 @@ struct samsung_dma_buffer_hdr {
 };
 #endif
 
+struct ion_dmabuf_iova_entry {
+	struct list_head list;
+	struct device *dev;
+	struct dma_buf *dmabuf;
+	dma_addr_t iova;
+	size_t size;
+	atomic_t refcnt;
+};
+
+static LIST_HEAD(ion_dmabuf_iova_list);
+static DEFINE_MUTEX(ion_dmabuf_iova_lock);
+
 dma_addr_t ion_iovmm_map(struct dma_buf_attachment *attachment,
 			 off_t offset, size_t size,
 			 enum dma_data_direction direction, int prop)
 {
 	struct sg_table *sgt;
+	struct exynos_iovmm *vmm;
+	struct ion_dmabuf_iova_entry *entry;
+	dma_addr_t iova;
 
-	if (!attachment || !attachment->dmabuf)
+	if (!attachment || !attachment->dmabuf || !attachment->dev)
 		return -EINVAL;
 
+	vmm = exynos_get_iovmm(attachment->dev);
+	if (!vmm) {
 #if IS_ENABLED(CONFIG_DMABUF_SAMSUNG_HEAPS)
-	if (attachment->dmabuf->ops == &samsung_dma_buf_ops) {
-		struct samsung_dma_buffer_hdr *buffer = attachment->dmabuf->priv;
-		struct samsung_dma_iovm_map *iovm_map;
+		if (attachment->dmabuf->ops == &samsung_dma_buf_ops) {
+			struct samsung_dma_buffer_hdr *buffer = attachment->dmabuf->priv;
+			struct samsung_dma_iovm_map *iovm_map;
 
-		mutex_lock(&buffer->lock);
-		list_for_each_entry(iovm_map, &buffer->attachments, list) {
-			if (iovm_map->dev == attachment->dev) {
-				dma_addr_t iova = sg_dma_address(iovm_map->table.sgl);
-				mutex_unlock(&buffer->lock);
-				return iova + offset;
+			mutex_lock(&buffer->lock);
+			list_for_each_entry(iovm_map, &buffer->attachments, list) {
+				if (iovm_map->dev == attachment->dev) {
+					dma_addr_t addr = sg_dma_address(iovm_map->table.sgl);
+					mutex_unlock(&buffer->lock);
+					return addr + offset;
+				}
 			}
+			mutex_unlock(&buffer->lock);
 		}
-		mutex_unlock(&buffer->lock);
-	}
 #endif
+		if (attachment->sgt)
+			return sg_dma_address(attachment->sgt->sgl) + offset;
 
-	if (attachment->sgt)
-		return sg_dma_address(attachment->sgt->sgl) + offset;
+		sgt = dma_buf_map_attachment(attachment, direction);
+		if (IS_ERR_OR_NULL(sgt))
+			return sgt ? PTR_ERR(sgt) : -EINVAL;
+
+		return sg_dma_address(sgt->sgl) + offset;
+	}
+
+	mutex_lock(&ion_dmabuf_iova_lock);
+	list_for_each_entry(entry, &ion_dmabuf_iova_list, list) {
+		if (entry->dev == attachment->dev && entry->dmabuf == attachment->dmabuf) {
+			atomic_inc(&entry->refcnt);
+			iova = entry->iova + offset;
+			mutex_unlock(&ion_dmabuf_iova_lock);
+			return iova;
+		}
+	}
+	mutex_unlock(&ion_dmabuf_iova_lock);
+
+	if (device_get_dma_attr(attachment->dev) == DEV_DMA_COHERENT)
+		prop |= IOMMU_CACHE;
 
 	sgt = dma_buf_map_attachment(attachment, direction);
 	if (IS_ERR_OR_NULL(sgt))
 		return sgt ? PTR_ERR(sgt) : -EINVAL;
 
-	return sg_dma_address(sgt->sgl) + offset;
+	if (size == 0)
+		size = attachment->dmabuf->size;
+
+	iova = iovmm_map(attachment->dev, sgt->sgl, offset, size, direction, prop);
+	if (IS_ERR_VALUE(iova)) {
+		dma_buf_unmap_attachment(attachment, sgt, direction);
+		return iova;
+	}
+
+	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
+	if (entry) {
+		entry->dev = attachment->dev;
+		entry->dmabuf = attachment->dmabuf;
+		entry->iova = iova - offset;
+		entry->size = size;
+		atomic_set(&entry->refcnt, 1);
+
+		mutex_lock(&ion_dmabuf_iova_lock);
+		list_add_tail(&entry->list, &ion_dmabuf_iova_list);
+		mutex_unlock(&ion_dmabuf_iova_lock);
+	}
+
+	return iova;
 }
 EXPORT_SYMBOL_GPL(ion_iovmm_map);
 
@@ -940,12 +999,37 @@ EXPORT_SYMBOL_GPL(ion_iovmm_map_attr);
 
 void ion_iovmm_unmap(struct dma_buf_attachment *attachment, dma_addr_t iova)
 {
+	struct ion_dmabuf_iova_entry *entry, *tmp;
+
+	if (!attachment || !attachment->dmabuf || !attachment->dev)
+		return;
+
+	mutex_lock(&ion_dmabuf_iova_lock);
+	list_for_each_entry_safe(entry, tmp, &ion_dmabuf_iova_list, list) {
+		if (entry->dev == attachment->dev && entry->dmabuf == attachment->dmabuf) {
+			if (atomic_dec_and_test(&entry->refcnt)) {
+				dma_addr_t base_iova = entry->iova;
+				list_del(&entry->list);
+				kfree(entry);
+				mutex_unlock(&ion_dmabuf_iova_lock);
+				iovmm_unmap(attachment->dev, base_iova);
+				return;
+			}
+			mutex_unlock(&ion_dmabuf_iova_lock);
+			return;
+		}
+	}
+	mutex_unlock(&ion_dmabuf_iova_lock);
+
+	if (exynos_get_iovmm(attachment->dev))
+		iovmm_unmap(attachment->dev, iova);
 }
 EXPORT_SYMBOL_GPL(ion_iovmm_unmap);
 
 void ion_iovmm_unmap_attr(struct dma_buf_attachment *attachment,
 			  dma_addr_t iova, int map_attr)
 {
+	ion_iovmm_unmap(attachment, iova);
 }
 EXPORT_SYMBOL_GPL(ion_iovmm_unmap_attr);
 #endif
