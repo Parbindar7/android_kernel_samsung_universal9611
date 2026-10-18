@@ -107,7 +107,8 @@ void hpa_event_record(enum hpa_event_type type, struct dma_buf *dmabuf, ktime_t 
 	event->begin = begin;
 	event->done = ktime_get();
 	strlcpy(event->heapname, dmabuf->exp_name, sizeof(event->heapname));
-	event->ino = file_inode(dmabuf->file)->i_ino;
+	event->ino = (dmabuf->file && file_inode(dmabuf->file)) ?
+		     file_inode(dmabuf->file)->i_ino : 0;
 	event->size = dmabuf->size;
 	event->type = type;
 }
