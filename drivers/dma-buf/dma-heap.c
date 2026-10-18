@@ -11,7 +11,8 @@
 #include <linux/device.h>
 #include <linux/dma-buf.h>
 #include <linux/err.h>
-#include <linux/xarray.h>
+#include <linux/idr.h>
+#include <linux/radix-tree.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/nospec.h>
@@ -50,7 +51,8 @@ static LIST_HEAD(heap_list);
 static DEFINE_MUTEX(heap_list_lock);
 static dev_t dma_heap_devt;
 static struct class *dma_heap_class;
-static DEFINE_XARRAY_ALLOC(dma_heap_minors);
+static DEFINE_IDR(dma_heap_minors);
+static DEFINE_MUTEX(minor_lock);
 
 struct dma_heap *dma_heap_find(const char *name)
 {
@@ -123,7 +125,9 @@ static int dma_heap_open(struct inode *inode, struct file *file)
 {
 	struct dma_heap *heap;
 
-	heap = xa_load(&dma_heap_minors, iminor(inode));
+	mutex_lock(&minor_lock);
+	heap = idr_find(&dma_heap_minors, iminor(inode));
+	mutex_unlock(&minor_lock);
 	if (!heap) {
 		pr_err("dma_heap: minor %d unknown.\n", iminor(inode));
 		return -ENODEV;
@@ -252,7 +256,9 @@ static void dma_heap_release(struct kref *ref)
 
 	device_destroy(dma_heap_class, heap->heap_devt);
 	cdev_del(&heap->heap_cdev);
-	xa_erase(&dma_heap_minors, minor);
+	mutex_lock(&minor_lock);
+	idr_remove(&dma_heap_minors, minor);
+	mutex_unlock(&minor_lock);
 
 	kfree(heap);
 }
@@ -330,13 +336,16 @@ struct dma_heap *dma_heap_add(const struct dma_heap_export_info *exp_info)
 	heap->priv = exp_info->priv;
 
 	/* Find unused minor number */
-	ret = xa_alloc(&dma_heap_minors, &minor, heap,
-		       XA_LIMIT(0, NUM_HEAP_MINORS - 1), GFP_KERNEL);
+	mutex_lock(&minor_lock);
+	ret = idr_alloc(&dma_heap_minors, heap, 0, NUM_HEAP_MINORS, GFP_KERNEL);
 	if (ret < 0) {
+		mutex_unlock(&minor_lock);
 		pr_err("dma_heap: Unable to get minor number for heap\n");
 		err_ret = ERR_PTR(ret);
 		goto err0;
 	}
+	minor = ret;
+	mutex_unlock(&minor_lock);
 
 	/* Create device */
 	heap->heap_devt = MKDEV(MAJOR(dma_heap_devt), minor);
@@ -373,7 +382,9 @@ struct dma_heap *dma_heap_add(const struct dma_heap_export_info *exp_info)
 err2:
 	cdev_del(&heap->heap_cdev);
 err1:
-	xa_erase(&dma_heap_minors, minor);
+	mutex_lock(&minor_lock);
+	idr_remove(&dma_heap_minors, minor);
+	mutex_unlock(&minor_lock);
 err0:
 	kfree(heap);
 	return err_ret;
