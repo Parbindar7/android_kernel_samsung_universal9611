@@ -390,4 +390,11 @@ config QCOM_IOMMU
 	help
 	  Support for IOMMU on certain Qualcomm SoCs.
 
+config SAMSUNG_SECURE_IOVA
+	bool "Samsung Secure IOVA Management"
+	depends on EXYNOS_CONTENT_PATH_PROTECTION
+	default y
+	help
+	  Support for Samsung Secure IOVA management for DRM/content protection.
+
 endif # IOMMU_SUPPORT
