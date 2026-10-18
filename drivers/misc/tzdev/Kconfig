@@ -110,11 +110,11 @@ config TZDEV_SK_MULTICORE
 	  Define if secure kernel can work in multicore mode.
 
 config ION_FD2PHYS
-	tristate "ION FD to physical address converter"
-	depends on ION && (ARCH_EXYNOS || ARCH_MSM || ARCH_WHALE || ARCH_MT6755 || ARCH_MT6735 || ARCH_RANCHU || MACH_MT6757)
+	tristate "ION/DMA-BUF FD to physical address converter"
+	depends on ARCH_EXYNOS || ARCH_MSM || ARCH_WHALE || ARCH_MT6755 || ARCH_MT6735 || ARCH_RANCHU || MACH_MT6757
 	default y
 	help
-	  Provide a method for userspace to get physical address from ION buffer
+	  Provide a method for userspace to get physical address from buffer
 	  descriptor.
 
 config TZIRS
