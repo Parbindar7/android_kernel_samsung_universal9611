@@ -57,7 +57,8 @@ void dma_heap_event_record(enum dma_heap_event_type type, struct dma_buf *dmabuf
 	event->begin = begin;
 	event->done = ktime_get();
 	strlcpy(event->heapname, dmabuf->exp_name, sizeof(event->heapname));
-	event->ino = file_inode(dmabuf->file)->i_ino;
+	event->ino = (dmabuf->file && file_inode(dmabuf->file)) ?
+		     file_inode(dmabuf->file)->i_ino : 0;
 	event->size = dmabuf->size;
 	event->type = type;
 }
