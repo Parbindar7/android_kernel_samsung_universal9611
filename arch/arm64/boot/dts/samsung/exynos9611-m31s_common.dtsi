@@ -1355,7 +1355,7 @@
 &reserved_memory {
 	secure_camera {
 		compatible = "exynos9820-ion";
-		ion,heapname = "secure_camera_heap";
+		ion,heapname = "secure_camera";
 		reg = <0x0 0xE1900000 0x2000000>;
 		ion,secure;
 		ion,protection_id = <11>;
