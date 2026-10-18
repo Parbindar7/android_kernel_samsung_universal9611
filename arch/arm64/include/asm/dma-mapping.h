@@ -57,6 +57,11 @@ static inline bool is_device_dma_coherent(struct device *dev)
 	return dev->archdata.dma_coherent;
 }
 
+static inline bool dev_is_dma_coherent(struct device *dev)
+{
+	return is_device_dma_coherent(dev);
+}
+
 static inline dma_addr_t phys_to_dma(struct device *dev, phys_addr_t paddr)
 {
 	dma_addr_t dev_addr = (dma_addr_t)paddr;
