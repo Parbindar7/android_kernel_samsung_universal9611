@@ -3148,10 +3148,13 @@ void kbase_mem_kref_free(struct kref *kref)
 			WARN_ONCE(alloc->imported.umm.current_mapping_usage_count != 1,
 					"WARNING: expected excatly 1 mapping, got %d",
 					alloc->imported.umm.current_mapping_usage_count);
-			dma_buf_unmap_attachment(
-					alloc->imported.umm.dma_attachment,
-					alloc->imported.umm.sgt,
-					DMA_BIDIRECTIONAL);
+			if (alloc->imported.umm.sgt) {
+				dma_buf_unmap_attachment(
+						alloc->imported.umm.dma_attachment,
+						alloc->imported.umm.sgt,
+						DMA_BIDIRECTIONAL);
+				alloc->imported.umm.sgt = NULL;
+			}
 			kbase_remove_dma_buf_usage(alloc->imported.umm.kctx,
 						   alloc);
 		}
@@ -5207,7 +5210,12 @@ void kbase_unmap_external_resource(struct kbase_context *kctx, struct kbase_va_r
 	/* gpu_alloc was used in kbase_map_external_resources, so we need to use it for the
 	 * unmapping operation.
 	 */
-	struct kbase_mem_phy_alloc *alloc = reg->gpu_alloc;
+	struct kbase_mem_phy_alloc *alloc;
+
+	if (!kctx || !reg || !reg->gpu_alloc)
+		return;
+
+	alloc = reg->gpu_alloc;
 
 	lockdep_assert_held(&kctx->reg_lock);
 

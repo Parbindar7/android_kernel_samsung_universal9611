@@ -1324,7 +1324,7 @@ static int mfc_probe(struct platform_device *pdev)
 	dev->mfc_trace_longterm = g_mfc_trace_longterm;
 	dev->mfc_trace_logging = g_mfc_trace_logging;
 
-	dma_set_mask(&pdev->dev, DMA_BIT_MASK(36));
+	dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(36));
 
 	mfc_pm_init(dev);
 	ret = __mfc_register_resource(pdev, dev);

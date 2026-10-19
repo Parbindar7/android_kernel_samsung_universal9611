@@ -192,7 +192,8 @@ static void kbase_jd_post_external_resources(struct kbase_jd_atom *katom)
 
 		res_no = katom->nr_extres;
 		while (res_no-- > 0) {
-			kbase_unmap_external_resource(katom->kctx, katom->extres[res_no]);
+			if (katom->extres[res_no])
+				kbase_unmap_external_resource(katom->kctx, katom->extres[res_no]);
 		}
 		kfree(katom->extres);
 		katom->extres = NULL;
@@ -237,7 +238,7 @@ static int kbase_jd_pre_external_resources(struct kbase_jd_atom *katom, const st
 	if (!katom->nr_extres)
 		return -EINVAL;
 
-	katom->extres = kmalloc_array(katom->nr_extres, sizeof(*katom->extres), GFP_KERNEL);
+	katom->extres = kcalloc(katom->nr_extres, sizeof(*katom->extres), GFP_KERNEL);
 	if (!katom->extres)
 		return -ENOMEM;
 
@@ -371,7 +372,8 @@ failed_loop:
 	while (res_no-- > 0) {
 		struct kbase_va_region *reg = katom->extres[res_no];
 
-		kbase_unmap_external_resource(katom->kctx, reg);
+		if (reg)
+			kbase_unmap_external_resource(katom->kctx, reg);
 	}
 	kbase_gpu_vm_unlock(katom->kctx);
 

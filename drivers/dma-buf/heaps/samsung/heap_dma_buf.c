@@ -71,8 +71,8 @@ static void dma_iova_release(struct dma_buf *dmabuf)
 
 	list_for_each_entry_safe(iovm_map, tmp, &buffer->attachments, list) {
 		if (iovm_map->mapcnt)
-			WARN(1, "iova_map refcount leak found for %s\n",
-			     dev_name(iovm_map->dev));
+			pr_warn_ratelimited("iova_map refcount leak found for %s\n",
+					    dev_name(iovm_map->dev));
 
 		list_del(&iovm_map->list);
 		if (!dma_heap_tzmp_buffer(iovm_map->dev, buffer->flags))
@@ -191,9 +191,14 @@ static struct dma_iovm_map *dma_get_iovm_map(struct dma_buf_attachment *a,
 
 		iovm_map->table.nents = 1;
 	} else {
+		if (iovm_map->dev && (!iovm_map->dev->dma_mask || *iovm_map->dev->dma_mask < DMA_BIT_MASK(36)))
+			dma_coerce_mask_and_coherent(iovm_map->dev, DMA_BIT_MASK(36));
+
 		ret = dma_map_sgtable(iovm_map->dev, &iovm_map->table, direction,
 				      iovm_map->attrs | DMA_ATTR_SKIP_CPU_SYNC);
 		if (ret) {
+			pr_err("%s: dma_map_sgtable failed for %s (%d)\n",
+			       __func__, dev_name(iovm_map->dev), ret);
 			show_dmabuf_status(iovm_map->dev);
 			dma_iova_remove(iovm_map);
 
@@ -512,6 +517,10 @@ static void samsung_heap_vunmap(struct dma_buf *dmabuf, void *vaddr)
 	dma_heap_event_begin();
 
 	mutex_lock(&buffer->lock);
+	if (WARN_ON(buffer->vmap_cnt == 0)) {
+		mutex_unlock(&buffer->lock);
+		return;
+	}
 	if (!--buffer->vmap_cnt) {
 		vunmap(buffer->vaddr);
 		buffer->vaddr = NULL;
@@ -519,6 +528,24 @@ static void samsung_heap_vunmap(struct dma_buf *dmabuf, void *vaddr)
 	mutex_unlock(&buffer->lock);
 
 	dma_heap_event_record(DMA_HEAP_EVENT_VUNMAP, dmabuf, begin);
+}
+
+static void *samsung_heap_kmap(struct dma_buf *dmabuf, unsigned long page_num)
+{
+	void *vaddr = samsung_heap_vmap(dmabuf);
+
+	if (IS_ERR_OR_NULL(vaddr))
+		return NULL;
+
+	return vaddr + page_num * PAGE_SIZE;
+}
+
+static void samsung_heap_kunmap(struct dma_buf *dmabuf, unsigned long page_num,
+				void *vaddr)
+{
+	struct samsung_dma_buffer *buffer = dmabuf->priv;
+
+	samsung_heap_vunmap(dmabuf, buffer->vaddr);
 }
 
 static void samsung_heap_dma_buf_release(struct dma_buf *dmabuf)
@@ -553,6 +580,8 @@ const struct dma_buf_ops samsung_dma_buf_ops = {
 	.begin_cpu_access_partial = samsung_heap_dma_buf_begin_cpu_access_partial,
 	.end_cpu_access_partial = samsung_heap_dma_buf_end_cpu_access_partial,
 	.mmap = samsung_heap_mmap,
+	.map = samsung_heap_kmap,
+	.unmap = samsung_heap_kunmap,
 	.vmap = samsung_heap_vmap,
 	.vunmap = samsung_heap_vunmap,
 	.release = samsung_heap_dma_buf_release,

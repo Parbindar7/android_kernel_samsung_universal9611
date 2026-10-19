@@ -264,8 +264,15 @@ static void decon_free_unused_buf(struct decon_device *decon,
 
 	decon_info("%s, win[%d]plane[%d]\n", __func__, win, plane);
 
-	if (dma->attachment && dma->dma_addr)
-		ion_iovmm_unmap(dma->attachment, dma->dma_addr);
+	if (dma->dma_addr) {
+#if defined(CONFIG_SUPPORT_LEGACY_ION)
+		if (dma->attachment)
+			ion_iovmm_unmap(dma->attachment, dma->dma_addr);
+#else
+		if (dma->attachment && dma->attachment->dev)
+			iovmm_unmap(dma->attachment->dev, dma->dma_addr);
+#endif
+	}
 	if (dma->attachment && dma->sg_table)
 		dma_buf_unmap_attachment(dma->attachment,
 				dma->sg_table, DMA_TO_DEVICE);
@@ -291,13 +298,21 @@ static void decon_free_dma_buf(struct decon_device *decon,
 		dma->fence = NULL;
 #endif
 	}
+#if defined(CONFIG_SUPPORT_LEGACY_ION)
 	ion_iovmm_unmap(dma->attachment, dma->dma_addr);
+#else
+	if (dma->attachment && dma->attachment->dev)
+		iovmm_unmap(dma->attachment->dev, dma->dma_addr);
+#endif
 
-	dma_buf_unmap_attachment(dma->attachment, dma->sg_table,
-			DMA_TO_DEVICE);
+	if (dma->attachment && dma->sg_table)
+		dma_buf_unmap_attachment(dma->attachment, dma->sg_table,
+				DMA_TO_DEVICE);
 
-	dma_buf_detach(dma->dma_buf, dma->attachment);
-	dma_buf_put(dma->dma_buf);
+	if (dma->dma_buf && dma->attachment)
+		dma_buf_detach(dma->dma_buf, dma->attachment);
+	if (dma->dma_buf)
+		dma_buf_put(dma->dma_buf);
 #if defined(CONFIG_SUPPORT_LEGACY_ION)
 	ion_free(decon->ion_client, dma->ion_handle);
 #endif
@@ -1336,12 +1351,21 @@ static unsigned int decon_map_ion_handle(struct decon_device *decon,
 	}
 
 	/* This is DVA(Device Virtual Address) for setting base address SFR */
+#if defined(CONFIG_SUPPORT_LEGACY_ION)
 	dma->dma_addr = ion_iovmm_map(dma->attachment, 0, dma->dma_buf->size,
 				      DMA_TO_DEVICE, 0);
 	if (IS_ERR_VALUE(dma->dma_addr)) {
 		decon_err("ion_iovmm_map() failed: %pa\n", &dma->dma_addr);
 		goto err_iovmm_map;
 	}
+#else
+	dma->dma_addr = iovmm_map(dev, dma->sg_table->sgl, 0, dma->dma_buf->size,
+				  DMA_TO_DEVICE, 0);
+	if (IS_ERR_VALUE(dma->dma_addr)) {
+		decon_err("iovmm_map() failed: %pa\n", &dma->dma_addr);
+		goto err_iovmm_map;
+	}
+#endif
 
 #if defined(CONFIG_SUPPORT_LEGACY_ION)
 	dma->ion_handle = ion_handle;

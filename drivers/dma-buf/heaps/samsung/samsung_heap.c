@@ -417,7 +417,6 @@ struct dma_buf *samsung_export_dmabuf(struct samsung_dma_buffer *buffer, unsigne
 		return dmabuf;
 	}
 	atomic_long_add(dmabuf->size, &buffer->heap->total_bytes);
-	dmabuf_trace_alloc(dmabuf);
 
 	return dmabuf;
 }

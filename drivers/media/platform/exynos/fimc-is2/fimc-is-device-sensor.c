@@ -1149,6 +1149,8 @@ static int __init fimc_is_sensor_probe(struct platform_device *pdev)
 
 	FIMC_BUG(!pdev);
 
+	dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(36));
+
 	if (fimc_is_dev == NULL) {
 		warn("fimc_is_dev is not yet probed(sensor)");
 		pdev->dev.init_name = FIMC_IS_SENSOR_DEV_NAME;

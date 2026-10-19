@@ -616,6 +616,9 @@ static struct sg_table *hpa_heap_map_dma_buf(struct dma_buf_attachment *a,
 		sg_dma_len(table->sgl) = info->chunk_count * info->chunk_size;
 		table->nents = 1;
 	} else {
+		if (a->dev && (!a->dev->dma_mask || *a->dev->dma_mask < DMA_BIT_MASK(36)))
+			dma_coerce_mask_and_coherent(a->dev, DMA_BIT_MASK(36));
+
 		ret = dma_map_sgtable(a->dev, table, direction, a->dma_map_attrs);
 		if (ret) {
 			sg_free_table(table);

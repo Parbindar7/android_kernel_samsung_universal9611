@@ -22,7 +22,9 @@
 #include <linux/slab.h>
 
 #include "secure_buffer.h"
+#if IS_ENABLED(CONFIG_DMABUF_HEAPS_DEFERRED_FREE)
 #include "../deferred-free-helper.h"
+#endif
 
 struct dma_iovm_map {
 	struct list_head list;
@@ -46,7 +48,9 @@ struct samsung_dma_buffer {
 	void *priv;
 	unsigned long flags;
 	int vmap_cnt;
+#if IS_ENABLED(CONFIG_DMABUF_HEAPS_DEFERRED_FREE)
 	struct deferred_freelist_item deferred_free;
+#endif
 };
 
 struct samsung_dma_heap {

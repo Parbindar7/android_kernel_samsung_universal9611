@@ -694,6 +694,9 @@ err_priv_alloc:
 
 int fimc_is_mem_init(struct fimc_is_mem *mem, struct platform_device *pdev)
 {
+	if (pdev)
+		dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(36));
+
 #if defined(CONFIG_VIDEOBUF2_DMA_SG)
 	mem->fimc_is_mem_ops = &fimc_is_mem_ops_ion;
 	mem->vb2_mem_ops = &vb2_dma_sg_memops;

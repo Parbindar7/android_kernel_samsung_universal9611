@@ -3843,7 +3843,7 @@ static int sc_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	dma_set_mask(&pdev->dev, DMA_BIT_MASK(36));
+	dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(36));
 
 	atomic_set(&sc->wdt.cnt, 0);
 	setup_timer(&sc->wdt.timer, sc_watchdog, (unsigned long)sc);

@@ -371,7 +371,6 @@ static long dma_buf_set_name(struct dma_buf *dmabuf, const char __user *buf)
 		return PTR_ERR(name);
 
 	mutex_lock(&dmabuf->lock);
-	spin_lock(&dmabuf->name_lock);
 	if (!list_empty(&dmabuf->attachments)) {
 		ret = -EBUSY;
 		kfree(name);
@@ -383,7 +382,6 @@ static long dma_buf_set_name(struct dma_buf *dmabuf, const char __user *buf)
 	spin_unlock(&dmabuf->name_lock);
 
 out_unlock:
-	spin_unlock(&dmabuf->name_lock);
 	mutex_unlock(&dmabuf->lock);
 	return ret;
 }
@@ -1259,8 +1257,17 @@ void *dma_buf_kmap(struct dma_buf *dmabuf, unsigned long page_num)
 {
 	WARN_ON(!dmabuf);
 
-	if (!dmabuf->ops->map)
+	if (!dmabuf->ops->map) {
+		if (dmabuf->ops->vmap) {
+			void *vaddr = dmabuf->ops->vmap(dmabuf);
+
+			if (IS_ERR_OR_NULL(vaddr))
+				return NULL;
+
+			return vaddr + page_num * PAGE_SIZE;
+		}
 		return NULL;
+	}
 	return dmabuf->ops->map(dmabuf, page_num);
 }
 EXPORT_SYMBOL_GPL(dma_buf_kmap);
@@ -1280,6 +1287,8 @@ void dma_buf_kunmap(struct dma_buf *dmabuf, unsigned long page_num,
 
 	if (dmabuf->ops->unmap)
 		dmabuf->ops->unmap(dmabuf, page_num, vaddr);
+	else if (dmabuf->ops->vunmap)
+		dmabuf->ops->vunmap(dmabuf, vaddr);
 }
 EXPORT_SYMBOL_GPL(dma_buf_kunmap);
 

@@ -1287,7 +1287,7 @@ static int __init fimc_is_probe(struct platform_device *pdev)
 		}
 	}
 
-	dma_set_mask(&pdev->dev, DMA_BIT_MASK(36));
+	dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(36));
 
 	ret = fimc_is_mem_init(&core->resourcemgr.mem, core->pdev);
 	if (ret) {

@@ -86,7 +86,9 @@ static struct dmabuf_trace_device *dmabuf_trace_get_device(struct device *dev)
 			return &attach_lists[i];
 	}
 
-	BUG_ON(num_devices == MAX_ATTACHED_DEVICE);
+	if (WARN_ON(num_devices >= MAX_ATTACHED_DEVICE))
+		return NULL;
+
 	attach_lists[num_devices].dev = dev;
 
 	return &attach_lists[num_devices++];
@@ -99,8 +101,10 @@ void dmabuf_trace_map(struct dma_buf_attachment *a)
 
 	mutex_lock(&trace_lock);
 	trace_device = dmabuf_trace_get_device(a->dev);
-	trace_device->size += dmabuf->size;
-	trace_device->mapcnt++;
+	if (trace_device) {
+		trace_device->size += dmabuf->size;
+		trace_device->mapcnt++;
+	}
 	mutex_unlock(&trace_lock);
 }
 
@@ -111,8 +115,10 @@ void dmabuf_trace_unmap(struct dma_buf_attachment *a)
 
 	mutex_lock(&trace_lock);
 	trace_device = dmabuf_trace_get_device(a->dev);
-	trace_device->size -= dmabuf->size;
-	trace_device->mapcnt--;
+	if (trace_device) {
+		trace_device->size -= dmabuf->size;
+		trace_device->mapcnt--;
+	}
 	mutex_unlock(&trace_lock);
 }
 
@@ -199,6 +205,8 @@ void show_dmabuf_trace_info(void)
 			attach_lists[i].mapcnt);
 
 	list_for_each_entry(buffer, &buffer_list, node) {
+		if (!buffer || !buffer->dmabuf)
+			continue;
 		sorted_array[num_buffer++] = buffer->dmabuf->size;
 		if (num_buffer == num_sorted_array) {
 			num_skipped_buffer = dmabuf_trace_buffer_num - num_sorted_array;
@@ -243,9 +251,18 @@ void show_dmabuf_dva(struct device *dev)
 	pr_info("The %s domain device virtual address list: (kbsize@base)\n", dev_name(dev));
 
 	list_for_each_entry(buffer, &buffer_list, node) {
-		struct dma_buf *dmabuf = buffer->dmabuf;
-		struct samsung_dma_buffer *samsung_dma_buffer = dmabuf->priv;
+		struct dma_buf *dmabuf;
+		struct samsung_dma_buffer *samsung_dma_buffer;
 		struct dma_iovm_map *iovm_map;
+
+		if (!buffer || !buffer->dmabuf)
+			continue;
+
+		dmabuf = buffer->dmabuf;
+		if (dmabuf->ops != &samsung_dma_buf_ops || !dmabuf->priv)
+			continue;
+
+		samsung_dma_buffer = dmabuf->priv;
 
 		mutex_lock(&samsung_dma_buffer->lock);
 		list_for_each_entry(iovm_map, &samsung_dma_buffer->attachments, list) {
@@ -262,6 +279,7 @@ void show_dmabuf_dva(struct device *dev)
 		}
 		mutex_unlock(&samsung_dma_buffer->lock);
 	}
+	pr_cont("\n");
 	pr_info("Total dva allocated size %zukb\n", mapped_size >> 10);
 	mutex_unlock(&trace_lock);
 }
@@ -280,13 +298,21 @@ static void show_dmabuf_trace_handler(void *data, unsigned int filter, nodemask_
 
 static void dmabuf_trace_free_ref_force(struct dmabuf_trace_ref *ref)
 {
-	ref->buffer->shared_count--;
+	if (!ref)
+		return;
 
-	ref->task->mmap_size -= ref->buffer->dmabuf->size;
-	ref->task->mmap_count--;
+	if (ref->buffer)
+		ref->buffer->shared_count--;
 
-	list_del(&ref->buffer_node);
-	list_del(&ref->task_node);
+	if (ref->task && ref->buffer && ref->buffer->dmabuf) {
+		ref->task->mmap_size -= ref->buffer->dmabuf->size;
+		ref->task->mmap_count--;
+	}
+
+	if (!list_empty(&ref->buffer_node))
+		list_del_init(&ref->buffer_node);
+	if (!list_empty(&ref->task_node))
+		list_del_init(&ref->task_node);
 
 	kfree(ref);
 }
@@ -334,15 +360,23 @@ static const struct file_operations dmabuf_trace_task_fops = {
 
 static struct dmabuf_trace_buffer *dmabuf_trace_get_buffer(struct dma_buf *dmabuf)
 {
-	struct samsung_dma_buffer *dma_buffer = dmabuf->priv;
+	struct samsung_dma_buffer *dma_buffer;
 
+	if (!dmabuf || dmabuf->ops != &samsung_dma_buf_ops || !dmabuf->priv)
+		return NULL;
+
+	dma_buffer = dmabuf->priv;
 	return dma_buffer->trace_buffer;
 }
 
 static void dmabuf_trace_set_buffer(struct dma_buf *dmabuf, struct dmabuf_trace_buffer *buffer)
 {
-	struct samsung_dma_buffer *dma_buffer = dmabuf->priv;
+	struct samsung_dma_buffer *dma_buffer;
 
+	if (!dmabuf || dmabuf->ops != &samsung_dma_buf_ops || !dmabuf->priv)
+		return;
+
+	dma_buffer = dmabuf->priv;
 	dma_buffer->trace_buffer = buffer;
 }
 
@@ -478,6 +512,9 @@ int dmabuf_trace_alloc(struct dma_buf *dmabuf)
 	struct dmabuf_trace_buffer *buffer;
 	struct dmabuf_trace_task *task;
 
+	if (!dmabuf || dmabuf->ops != &samsung_dma_buf_ops || !dmabuf->priv)
+		return 0;
+
 	buffer = kzalloc(sizeof(*buffer), GFP_KERNEL);
 	if (!buffer)
 		return -ENOMEM;
@@ -526,6 +563,9 @@ void dmabuf_trace_free(struct dma_buf *dmabuf)
 	struct dmabuf_trace_buffer *buffer;
 	struct dmabuf_trace_ref *ref, *tmp;
 
+	if (!dmabuf || dmabuf->ops != &samsung_dma_buf_ops || !dmabuf->priv)
+		return;
+
 	mutex_lock(&trace_lock);
 	buffer = dmabuf_trace_get_buffer(dmabuf);
 	if (!buffer) {
@@ -533,11 +573,16 @@ void dmabuf_trace_free(struct dma_buf *dmabuf)
 		return;
 	}
 
+	dmabuf_trace_set_buffer(dmabuf, NULL);
+
 	list_for_each_entry_safe(ref, tmp, &buffer->ref_list, buffer_node)
 		dmabuf_trace_free_ref_force(ref);
 
-	list_del(&buffer->node);
-	dmabuf_trace_buffer_size -= buffer->dmabuf->size;
+	if (!list_empty(&buffer->node))
+		list_del_init(&buffer->node);
+
+	if (buffer->dmabuf)
+		dmabuf_trace_buffer_size -= buffer->dmabuf->size;
 	dmabuf_trace_buffer_num--;
 	mutex_unlock(&trace_lock);
 	kfree(buffer);
@@ -554,6 +599,9 @@ int dmabuf_trace_track_buffer(struct dma_buf *dmabuf)
 	struct dmabuf_trace_buffer *buffer;
 	struct dmabuf_trace_task *task;
 	struct dmabuf_trace_ref *ref;
+
+	if (!dmabuf || dmabuf->ops != &samsung_dma_buf_ops || !dmabuf->priv)
+		return 0;
 
 	mutex_lock(&trace_lock);
 	task = dmabuf_trace_get_task();
@@ -590,6 +638,9 @@ int dmabuf_trace_untrack_buffer(struct dma_buf *dmabuf)
 	struct dmabuf_trace_task *task;
 	struct dmabuf_trace_ref *ref;
 	int ret;
+
+	if (!dmabuf || dmabuf->ops != &samsung_dma_buf_ops || !dmabuf->priv)
+		return 0;
 
 	mutex_lock(&trace_lock);
 	task = dmabuf_trace_get_task_noalloc();
@@ -825,6 +876,9 @@ static void dmabuf_trace_set_sizes(unsigned int pid, unsigned int count,
 
 	list_for_each_entry(ref, &task->ref_list, task_node) {
 		unsigned int mflags;
+
+		if (!ref->buffer || !ref->buffer->dmabuf || !ref->buffer->shared_count)
+			continue;
 
 		mflags = dmabuf_trace_get_memtrack_flags(ref->buffer->dmabuf);
 

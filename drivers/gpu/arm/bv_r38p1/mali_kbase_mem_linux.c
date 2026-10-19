@@ -1175,9 +1175,11 @@ static void kbase_mem_umm_unmap_attachment(struct kbase_context *kctx,
 {
 	struct tagged_addr *pa = alloc->pages;
 
-	dma_buf_unmap_attachment(alloc->imported.umm.dma_attachment,
-				 alloc->imported.umm.sgt, DMA_BIDIRECTIONAL);
-	alloc->imported.umm.sgt = NULL;
+	if (alloc->imported.umm.sgt) {
+		dma_buf_unmap_attachment(alloc->imported.umm.dma_attachment,
+					 alloc->imported.umm.sgt, DMA_BIDIRECTIONAL);
+		alloc->imported.umm.sgt = NULL;
+	}
 
 	kbase_remove_dma_buf_usage(kctx, alloc);
 
