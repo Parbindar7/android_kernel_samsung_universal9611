@@ -1365,11 +1365,4 @@
 	};
 };
 
-&reserved_memory {
-	secure_camera: secure_camera@0xE1900000 {
-		reg = <0x0 0xE1900000 0x2000000>;
-	};
-	camera_contig: camera_contig@0xDB900000 {
-		reg = <0x0 0xDB900000 0x700000>;
-	};
-};
+
