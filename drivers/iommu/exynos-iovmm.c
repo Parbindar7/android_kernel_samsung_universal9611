@@ -977,6 +977,9 @@ dma_addr_t ion_iovmm_map(struct dma_buf_attachment *attachment,
 	if (IS_ERR_OR_NULL(sgt))
 		return sgt ? PTR_ERR(sgt) : -EINVAL;
 
+	if (attachment->dma_map_attrs & DMA_ATTR_PRIVILEGED)
+		prop |= IOMMU_PRIV;
+
 	if (vmm) {
 		size_t full_size = attachment->dmabuf->size;
 

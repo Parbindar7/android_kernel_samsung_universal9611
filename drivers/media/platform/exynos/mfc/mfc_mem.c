@@ -122,15 +122,6 @@ int mfc_mem_ion_alloc(struct mfc_dev *dev,
 		goto err_attach;
 	}
 
-	special_buf->sgt = dma_buf_map_attachment(special_buf->attachment,
-			DMA_BIDIRECTIONAL);
-	if (IS_ERR(special_buf->sgt)) {
-		mfc_err_dev("Failed to get sgt (err %ld)\n",
-				PTR_ERR(special_buf->sgt));
-		call_dop(dev, dump_and_stop_debug_mode, dev);
-		goto err_map;
-	}
-
 	special_buf->daddr = ion_iovmm_map(special_buf->attachment, 0,
 			special_buf->size, DMA_BIDIRECTIONAL, 0);
 	if (IS_ERR_VALUE(special_buf->daddr)) {
@@ -148,6 +139,9 @@ int mfc_mem_ion_alloc(struct mfc_dev *dev,
 		goto err_vaddr;
 	}
 
+	memset(special_buf->vaddr, 0, special_buf->size);
+	mfc_mem_clean(dev, special_buf, 0, special_buf->size);
+
 	return 0;
 err_vaddr:
 	special_buf->vaddr = NULL;
@@ -155,10 +149,6 @@ err_vaddr:
 
 err_iovmm:
 	special_buf->daddr = 0;
-	dma_buf_unmap_attachment(special_buf->attachment, special_buf->sgt,
-				 DMA_BIDIRECTIONAL);
-err_map:
-	special_buf->sgt = NULL;
 	dma_buf_detach(special_buf->dma_buf, special_buf->attachment);
 err_attach:
 	special_buf->attachment = NULL;
@@ -175,9 +165,6 @@ void mfc_mem_ion_free(struct mfc_dev *dev,
 		dma_buf_vunmap(special_buf->dma_buf, special_buf->vaddr);
 	if (special_buf->daddr)
 		ion_iovmm_unmap(special_buf->attachment, special_buf->daddr);
-	if (special_buf->sgt)
-		dma_buf_unmap_attachment(special_buf->attachment,
-					 special_buf->sgt, DMA_BIDIRECTIONAL);
 	if (special_buf->attachment)
 		dma_buf_detach(special_buf->dma_buf, special_buf->attachment);
 	if (special_buf->dma_buf)

@@ -603,8 +603,9 @@ int mfc_load_firmware(struct mfc_dev *dev)
 
 	/*  This adds to clear with '0' for firmware memory except code region. */
 	mfc_debug(4, "[F/W] memset before memcpy for normal fw\n");
-	memset((dev->fw_buf.vaddr + fw_blob->size), 0, (firmware_size - fw_blob->size));
+	memset((dev->fw_buf.vaddr + fw_blob->size), 0, (dev->fw_buf.size - fw_blob->size));
 	memcpy(dev->fw_buf.vaddr, fw_blob->data, fw_blob->size);
+	mfc_mem_clean(dev, &dev->fw_buf, 0, dev->fw_buf.size);
 	if (dev->drm_fw_buf.vaddr) {
 		mfc_debug(4, "[F/W] memset before memcpy for secure fw\n");
 		memset((dev->drm_fw_buf.vaddr + fw_blob->size), 0, (firmware_size - fw_blob->size));
