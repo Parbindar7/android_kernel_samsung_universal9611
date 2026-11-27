@@ -978,16 +978,18 @@ dma_addr_t ion_iovmm_map(struct dma_buf_attachment *attachment,
 		return sgt ? PTR_ERR(sgt) : -EINVAL;
 
 	if (vmm) {
-		if (size == 0)
-			size = attachment->dmabuf->size;
+		size_t full_size = attachment->dmabuf->size;
 
-		iova = iovmm_map(attachment->dev, sgt->sgl, offset, size, direction, prop);
+		iova = iovmm_map(attachment->dev, sgt->sgl, 0, full_size, direction, prop);
 		if (IS_ERR_VALUE(iova)) {
 			dma_buf_unmap_attachment(attachment, sgt, direction);
 			return iova;
 		}
+		iova += offset;
+		size = full_size;
 	} else {
 		iova = sg_dma_address(sgt->sgl) + offset;
+		size = attachment->dmabuf->size;
 	}
 
 	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
